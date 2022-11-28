@@ -3,7 +3,7 @@
 ① 주제
 	배달의 민족 Clone Site 제작<br><br>
 
-② 개발환경
+② 개발환경<br>
 	­ Java Development Kit : 11<br>
 	­ IDE : STS 4.15.3<br>
 	­ DB : Oracle 11g<br>
