@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.baemin.dao.AuthMapper">
+
+	<select id="usernameChk" resultType="int">
+		SELECT COUNT(*) FROM BM_USER WHERE USERNAME = #{username}
+	</select>
+
+	<insert id="signup">
+		INSERT INTO BM_USER (ID, USERNAME, PASSWORD, EMAIL, NICKNAME, PHONE) 
+		VALUES (USER_ID_SEQ.NEXTVAL, #{username}, #{password}, #{email}, #{nickname}, #{phone})
+	</insert>
+	
+	<select id="getUser" resultType="com.baemin.config.auth.CustomUserDetails">
+		SELECT * FROM BM_USER WHERE USERNAME = #{username}
+	</select>
+	
+</mapper>

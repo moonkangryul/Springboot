@@ -1,0 +1,54 @@
+@charset "UTF-8";
+
+.modal .modal_box {
+		height: calc(100% - 80px);
+}
+
+.modal form {
+		display: inline;
+}
+
+.modal .score_box {
+		width: 80%;
+		margin: 0 auto;
+		text-align: center;
+		padding: 20px;
+}
+
+.modal .score_box i {
+		font-size: 22px;
+}
+
+.modal .score_box .fas {
+		color: gold;
+}
+
+.modal .review_text {
+		margin: 0 auto;
+		width: 90%;
+}
+
+.modal .review_text textarea {
+		width: 90%;
+		margin: 0 auto 30px auto;
+		display: block;
+		padding: 5px;
+		font-size: 1.6rem;
+		background: #eee;
+		border: none;
+}
+
+.modal .review_submit_btn {
+		background: #ddd;
+}
+
+@media ( max-width : 767px) {
+		.modal .review_btn_box {
+				right: 0px;
+				top: 5px
+		}
+		.modal .review_btn_box button {
+				width: 80px;
+				font-size: 10px;
+		}
+}

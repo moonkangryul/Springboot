@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baemin.dao.OrderMapper">
+
+	<select id="getDeliveryTip" resultType="int">
+		SELECT DELIVERY_TIP FROM BM_STORE WHERE ID = #{storeId }
+	</select>
+
+	<select id="foodPriceList" resultType="int">
+		<foreach collection="list" item="item" separator="union all">
+			SELECT SUM(FOOD_PRICE) SUM FROM BM_FOOD WHERE ID = #{item.foodId}
+		</foreach>
+	</select>
+
+	<select id="optionPriceList" resultType="int">
+		<foreach collection="list" item="item" separator="union all">
+			<if test="item.optionId == null">
+				SELECT 0 FROM DUAL
+			</if>
+
+			<if test="item.optionId != null">
+				SELECT SUM(OPTION_PRICE) SUM FROM BM_FOOD_OPTION WHERE ID IN
+				<foreach collection="item.optionId" item="i" open="(" close=")" separator=",">
+					#{i}
+				</foreach>
+			</if>
+		</foreach>
+	</select>
+	
+	<select id="orderList" resultType="com.baemin.dto.OrderListDto">
+		SELECT * FROM (
+	    	SELECT	ROWNUM R
+	    			,O.* 
+	    	FROM 	(SELECT	count(*) over() list_count,
+					    	o.order_num,
+					    	o.user_id,
+					    	o.order_date,
+					    	o.pay_method,
+					    	o.delivery_status,
+					    	o.delivery_address1,
+					    	o.delivery_address2,
+					    	o.delivery_address3,
+					    	o.store_id,
+					    	o.total_price,
+					    	o.used_point,
+	                        o.request,
+	                        d.food_info,
+					    	s.store_name,
+						    s.store_img,
+						    s.store_thumb,
+						    s.delivery_tip,
+						    r.review_content,
+			            	r.score,
+			            	r.review_img
+				FROM		bm_order_user o
+				LEFT JOIN   (SELECT  ORDER_NUM, 
+	                                 LISTAGG(FOOD_INFO, '/') WITHIN GROUP(ORDER BY FOOD_INFO) AS food_info
+	                        FROM     BM_ORDER_DETAIL_USER 
+	                        GROUP BY ORDER_NUM) d
+				ON		  	o.order_num = d.order_num
+				LEFT JOIN	bm_store s
+				ON		 	o.store_id = s.id
+				LEFT JOIN	bm_review r
+	    		ON			o.order_num = r.order_num
+				WHERE		o.user_id = #{userId}
+				ORDER BY	o.order_date desc
+		        ) O
+			)
+		WHERE R BETWEEN #{firstList } AND #{lastList }
+	</select>
+
+	<select id="orderListDetail" resultType="com.baemin.dto.OrderListDto">
+		SELECT	o.order_num,
+		    	o.user_id,
+		    	o.order_date,
+		    	o.pay_method,
+		    	o.delivery_status,
+		    	o.phone,
+		    	o.delivery_address1,
+		    	o.delivery_address2,
+		    	o.delivery_address3,
+		    	o.store_id,
+		    	o.total_price,
+		    	o.used_point,
+                o.request,
+                d.food_info,
+		    	s.store_name,
+			    s.delivery_tip
+				FROM		bm_order_user o
+				LEFT JOIN   (SELECT  ORDER_NUM, 
+			                         LISTAGG(FOOD_INFO, '/') WITHIN GROUP(ORDER BY FOOD_INFO) AS food_info
+			                FROM     bm_ORDER_DETAIL_USER 
+			                GROUP BY ORDER_NUM) d
+				ON		  	o.order_num = d.order_num
+				LEFT JOIN	bm_store s
+				ON		 	o.store_id = s.id 
+				WHERE		o.order_num = #{orderNum}
+				ORDER BY	o.order_date desc
+	</select>
+
+	<insert id="order">
+		<if test="userId == 0">
+			INSERT INTO BM_ORDER_NON_USER (
+				ORDER_NUM
+				,STORE_ID
+				,USER_ID
+				,PAY_METHOD
+				,PHONE
+				,DELIVERY_ADDRESS1
+				,DELIVERY_ADDRESS2
+				,DELIVERY_ADDRESS3
+				,TOTAL_PRICE
+				,USED_POINT
+				,REQUEST
+				,IMP_UID
+			) VALUES (
+				${orderNum }
+				,#{storeId }
+				,#{userId }
+				,#{payMethod }
+				,#{phone }
+				,#{deliveryAddress1 }
+				,#{deliveryAddress2 }
+				,#{deliveryAddress3 }
+				,#{totalPrice }
+				,#{usedPoint }
+				,#{request }
+				,#{impUid, jdbcType=VARCHAR }
+			)
+		</if>
+
+		<if test="userId != 0">
+			INSERT INTO BM_ORDER_USER (
+				ORDER_NUM
+				,STORE_ID
+				,USER_ID
+				,PAY_METHOD
+				,PHONE
+				,DELIVERY_ADDRESS1
+				,DELIVERY_ADDRESS2
+				,DELIVERY_ADDRESS3
+				,TOTAL_PRICE
+				,USED_POINT
+				,REQUEST
+				,IMP_UID
+			) VALUES (
+				${orderNum }
+				,#{storeId }
+				,#{userId }
+				,#{payMethod }
+				,#{phone }
+				,#{deliveryAddress1 }
+				,#{deliveryAddress2 }
+				,#{deliveryAddress3 }
+				,#{totalPrice }
+				,#{usedPoint }
+				,#{request }
+				,#{impUid, jdbcType=VARCHAR }
+			)
+		</if>
+	</insert>
+
+	<update id="orderDetail" parameterType="java.util.HashMap">
+		<if test="userId == 0">
+			<foreach collection="detail" item="item" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+				INTO BM_ORDER_DETAIL_NON_USER (
+					ORDER_NUM
+					,FOOD_INFO
+				) VALUES (
+					#{item.orderNum}
+					,#{item.foodInfoJSON}
+				)
+			</foreach>
+		</if>
+
+		<if test="userId != 0">
+			<foreach collection="detail" item="item" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+				INTO BM_ORDER_DETAIL_USER (
+					ORDER_NUM
+					,FOOD_INFO
+				) VALUES (
+					#{item.orderNum}
+					,#{item.foodInfoJSON}
+				)
+			</foreach>
+		</if>
+	</update>
+	
+</mapper>

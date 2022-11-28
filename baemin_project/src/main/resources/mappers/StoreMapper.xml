@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.baemin.dao.StoreMapper">
+
+	<select id="storeList" resultType="com.baemin.dto.StoreDto">
+		WITH R_COUNT AS (
+	    SELECT STORE_ID
+                ,ROUND(AVG(SCORE), 1) SCORE
+                ,COUNT(REVIEW_CONTENT) REVIEW_COUNT
+                ,COUNT(BOSS_COMMENT) BOSS_COMMENT_COUNT 
+        FROM    BM_REVIEW 
+        GROUP BY STORE_ID
+		),
+		STORE AS (
+		    SELECT  S.*,
+		            T.*
+		    FROM        BM_STORE S
+		    LEFT JOIN   R_COUNT T
+		    ON          S.ID = T.STORE_ID     
+		    WHERE       CATEGORY = #{category} 
+		    AND         STORE_ADDRESS1 LIKE '${address}%'
+		    
+			<if test="sort == '배달 빠른 순'">
+				ORDER BY DELIVERY_TIME
+			</if>
+			
+			<if test="sort == '배달팁 낮은 순'">
+				ORDER BY DELIVERY_TIP
+			</if>
+			
+			<if test="sort == '별점 높은 순'">
+				ORDER BY REVIEW_COUNT
+			</if>
+			
+			<if test="sort == '리뷰 많은 순'">
+				ORDER BY SCORE
+			</if>
+			
+			<if test="sort == '최소 주문 금액 순'">
+				ORDER BY MIN_DELIVERY
+			</if> 
+			)
+	        
+		SELECT * FROM 
+		    (SELECT ROWNUM RN, 
+		            RESULT.* 
+		    FROM   
+		            (SELECT C.* 
+		                    ,'true' IS_OPEN 
+		            FROM    STORE C  
+		            WHERE   TO_CHAR(SYSTIMESTAMP, 'HH24') BETWEEN OPENING_TIME AND CLOSING_TIME
+		            
+		            UNION ALL
+			         
+		            SELECT C.*
+		                   ,'false' IS_OPEN 
+		            FROM   STORE C  
+		            WHERE  TO_CHAR(SYSTIMESTAMP, 'HH24') NOT BETWEEN OPENING_TIME AND CLOSING_TIME
+			        ) RESULT
+			 )
+		WHERE RN BETWEEN #{firstList } AND ${lastList }
+	</select>
+	
+	<select id="storeDetail" resultType="com.baemin.dto.StoreDto">
+		SELECT	RESULT.*
+		        ,CASE WHEN TO_CHAR(SYSDATE,'HH24') BETWEEN OPENING_TIME AND CLOSING_TIME THEN 'true' ELSE 'false' END IS_OPEN, L.IS_LIKES
+		FROM	(SELECT S.*,
+		                C.*
+		        FROM 	BM_STORE S
+		                ,(SELECT * FROM  
+		                        (SELECT	ROUND(AVG(SCORE),1) SCORE
+		                        ,COUNT(REVIEW_CONTENT) REVIEW_COUNT
+		                        ,COUNT(BOSS_COMMENT) BOSS_COMMENT_COUNT
+		                        ,COUNT(CASE WHEN SCORE=1 THEN 1 END) SCORE1
+		                        ,COUNT(CASE WHEN SCORE=2 THEN 1 END) SCORE2
+		                        ,COUNT(CASE WHEN SCORE=3 THEN 1 END) SCORE3
+		                        ,COUNT(CASE WHEN SCORE=4 THEN 1 END) SCORE4
+		                        ,COUNT(CASE WHEN SCORE=5 THEN 1 END) SCORE5
+		                FROM 	BM_REVIEW WHERE STORE_ID = #{storeId } ) 
+		                , (SELECT COUNT(*) LIKES_COUNT FROM BM_LIKES WHERE STORE_ID = #{storeId } )
+		                ,(SELECT SUM(ORDER_COUNT) ORDER_COUNT FROM (
+		                    SELECT COUNT(*) ORDER_COUNT FROM BM_ORDER_USER WHERE STORE_ID = #{storeId }
+		                        UNION ALL
+		                    SELECT COUNT(*) ORDER_COUNT FROM BM_ORDER_NON_USER WHERE STORE_ID = #{storeId } ))
+		                ) C
+		        WHERE 	ID = #{storeId }
+		        ) RESULT
+				 LEFT JOIN	(SELECT STORE_ID, 1 IS_LIKES FROM BM_LIKES WHERE EXISTS(SELECT 1 FROM BM_LIKES WHERE USER_ID = #{userId } AND  STORE_ID = #{storeId } )) L
+ 				 ON	RESULT.ID = L.STORE_ID 
+	</select>
+	
+	<select id="foodList" resultType="com.baemin.dto.FoodDto">
+		SELECT * FROM BM_FOOD WHERE STORE_ID = #{storeId}
+	</select>
+	
+	<select id="foodOption" resultType="com.baemin.dto.FoodOptionDto">
+		SELECT * FROM BM_FOOD_OPTION WHERE FOOD_ID = #{foodId}
+	</select>
+	
+	<select id="reviewList" resultType="com.baemin.dto.ReviewDto">
+		SELECT
+		    r.order_num,
+		    r.store_id,
+		    r.review_content,
+		    r.boss_comment,
+		    r.regi_date,
+		    r.score,
+		    r.review_img,
+		    r.user_id,
+		    u.nickname
+		FROM
+		    bm_review r
+		LEFT JOIN
+		    bm_user u
+		ON
+		    r.user_id = u.id
+		WHERE
+		    r.store_id = #{id}
+		ORDER BY    
+			regi_date DESC
+	</select>
+	
+	<select id="likesList" resultType="com.baemin.dto.StoreDto">
+	   WITH R_COUNT AS (
+		    SELECT STORE_ID
+	                ,ROUND(AVG(SCORE), 1) SCORE
+	                ,COUNT(REVIEW_CONTENT) REVIEW_COUNT
+	                ,COUNT(BOSS_COMMENT) BOSS_COMMENT_COUNT 
+	        FROM    BM_REVIEW 
+	        GROUP BY STORE_ID
+		),
+		STORE AS (
+		    SELECT  S.*,
+		            T.*,
+	                L.USER_ID,
+	                L.LIKES_DATE
+		    FROM        BM_STORE S
+		    LEFT JOIN   R_COUNT T
+		    ON          S.ID = T.STORE_ID     
+	        LEFT JOIN 	BM_LIKES L
+	        ON 			S.ID = L.STORE_ID 
+	        WHERE 		USER_ID = #{userId})
+	    	SELECT * FROM 
+		    (SELECT ROWNUM RN, 
+		            RESULT.* 
+		    FROM   
+		            (SELECT C.* 
+		                    ,'true' IS_OPEN 
+		            FROM    STORE C  
+		            WHERE   TO_CHAR(SYSTIMESTAMP, 'HH24') BETWEEN OPENING_TIME AND CLOSING_TIME
+		            
+		            UNION ALL
+			         
+		            SELECT C.*
+		                   ,'false' IS_OPEN 
+		            FROM   STORE C  
+		            WHERE  TO_CHAR(SYSTIMESTAMP, 'HH24') NOT BETWEEN OPENING_TIME AND CLOSING_TIME
+			        ) RESULT
+			 ) 
+		WHERE RN BETWEEN #{firstList } AND ${lastList }	
+	    ORDER BY LIKES_DATE DESC
+	</select>
+	
+	<select id="storeSearch" resultType="com.baemin.dto.StoreDto">
+		WITH R_COUNT AS (
+	    SELECT STORE_ID
+                ,ROUND(AVG(SCORE), 1) SCORE
+                ,COUNT(REVIEW_CONTENT) REVIEW_COUNT
+                ,COUNT(BOSS_COMMENT) BOSS_COMMENT_COUNT 
+        FROM    BM_REVIEW 
+        GROUP BY STORE_ID
+		),
+		STORE AS (
+		    SELECT  S.*,
+		            T.*
+		    FROM        BM_STORE S
+		    LEFT JOIN   R_COUNT T
+		    ON          S.ID = T.STORE_ID     
+		    WHERE       STORE_NAME LIKE '%${keyword}%'
+		    AND         STORE_ADDRESS1 LIKE '${address}%')
+		SELECT * FROM 
+		    (SELECT ROWNUM RN, 
+		            RESULT.* 
+		    FROM   
+		            (SELECT C.* 
+		                    ,'true' IS_OPEN 
+		            FROM    STORE C  
+		            WHERE   TO_CHAR(SYSTIMESTAMP, 'HH24') BETWEEN OPENING_TIME AND CLOSING_TIME
+		            
+		            UNION ALL
+			         
+		            SELECT C.*
+		                   ,'false' IS_OPEN 
+		            FROM   STORE C  
+		            WHERE  TO_CHAR(SYSTIMESTAMP, 'HH24') NOT BETWEEN OPENING_TIME AND CLOSING_TIME
+			        ) RESULT
+			 ) 
+		WHERE RN BETWEEN #{firstList } AND ${lastList }
+	</select>
+	
+	<insert id="reviewWrite">
+		INSERT INTO BM_REVIEW (
+			ORDER_NUM
+			,STORE_ID
+			,REVIEW_CONTENT
+			,USER_ID
+			,SCORE
+			,REVIEW_IMG
+		) VALUES (
+			${orderNum }
+			,#{storeId }
+			,#{reviewContent }
+			,#{userId}
+			,#{score}
+			,#{reviewImg }
+		)
+	</insert>
+
+	<update id="reviewModify">
+		UPDATE BM_REVIEW
+		SET REVIEW_CONTENT = #{reviewContent }
+		,SCORE = #{score}
+		<if test="reviewImg != null">
+			,REVIEW_IMG = #{reviewImg }
+		</if>
+		WHERE
+			ORDER_NUM = ${orderNum }
+	</update>
+	
+	<insert id="addLikes">
+		INSERT INTO BM_LIKES (
+			USER_ID
+			,STORE_ID
+		) VALUES (
+			#{userId }
+			,#{storeId }
+		)
+	</insert>
+ 
+	<delete id="deleteLikes">
+		DELETE BM_LIKES
+		WHERE
+			USER_ID = #{userId } AND
+			STORE_ID = #{storeId }			
+	</delete>
+	
+</mapper>

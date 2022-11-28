@@ -1,0 +1,140 @@
+header {
+		width: 100%;
+		height: 80px;
+		background: #2AC1BC;
+		position: relative;		
+}
+
+#header {
+		width: 1200px;
+		margin: 0 auto;
+}
+
+header img {
+		width: 160px;
+}
+
+.menu_tab_box {
+		position: absolute;
+		top: 50%;
+		right: 20px;
+		transform: translateY(-50%);
+		z-index: 10;
+}
+
+.menu_tab, .menu_tab span {
+		display: inline-block;
+		transition: all 0.4s;
+		box-sizing: border-box;
+}
+
+.menu_tab {
+		position: relative;
+		width: 24px;
+		height: 18px;
+		cursor: pointer;
+		/* 	display: none; */
+}
+
+.menu_tab span {
+		position: absolute;
+		left: 0;
+		width: 100%;
+		height: 2px;
+		background-color: #fff;
+		border-radius: 4px;
+}
+
+.menu_tab span:nth-of-type(1) {
+		top: 0;
+}
+
+.menu_tab span:nth-of-type(2) {
+		top: 50%;
+		transform: translateY(-50%);
+}
+
+.menu_tab span:nth-of-type(3) {
+		bottom: 0;
+}
+
+.menu_tab.active span:nth-of-type(1) {
+		transform: translateY(8px) rotate(-45deg);
+}
+
+.menu_tab.active span:nth-of-type(2) {
+		opacity: 0;
+}
+
+.menu_tab.active span:nth-of-type(3) {
+		transform: translateY(-8px) rotate(45deg);
+}
+
+header #menu {
+		background: rgba(0, 0, 0, 0.9);
+		width: 400px;
+		height: 100vh;
+		position: fixed;
+		right: -400px;
+		top: 0;
+		z-index: 9;
+		transition: all 0.4s;
+}
+
+header #menu.active {
+		right: 0;
+}
+
+header #menu .box {
+		margin-top: 80px;
+}
+
+header #menu .box a {
+		color: #fff;
+		display: block;
+		width: 100%;
+		height: 50px;
+		line-height: 50px;
+		font-size: 2rem;
+		padding-left: 25px;
+}
+
+header #menu .box a:hover {
+		background: #eee;
+		color: #000;
+}
+
+header #menu_bg {
+		background: rgba(0, 0, 0, 0.1);
+		width: 100vw;
+		height: 100vh;
+		position: fixed;
+		z-index: 8;
+		top: 0;
+		right: 0;
+		display: none;
+}
+
+@media ( max-width : 1250px) {
+		#header {
+				width: 99%;
+		}
+}
+
+@media ( max-width : 767px) {
+		header img {
+				width: 120px;
+				position: relative;
+				left: -15px;
+		}
+		header {
+				height: 60px;
+		}
+		header #menu {
+				width: 300px;
+				right: -300px;
+		}
+		header #menu .box {
+				margin-top: 60px;
+		}
+}

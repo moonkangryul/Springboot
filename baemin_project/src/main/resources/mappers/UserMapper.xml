@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.baemin.dao.UserMapper">
+
+	<select id="myPoint" resultType="com.baemin.dto.PointDto">
+		SELECT
+			USER_ID
+			,USED_DATE
+			,INFO
+			,POINT
+		FROM
+			BM_POINT
+		WHERE
+			USER_ID = #{id }
+		ORDER BY
+			USED_DATE DESC
+	</select>
+
+	<select id="myReviewList" resultType="com.baemin.dto.ReviewDto">
+		SELECT
+			ORDER_NUM
+			,STORE_ID
+			,REVIEW_CONTENT
+			,BOSS_COMMENT
+			,REGI_DATE
+			,SCORE
+			,REVIEW_IMG
+			,USER_ID
+		FROM
+			BM_REVIEW
+		WHERE
+			USER_ID = #{id }
+		ORDER BY
+			REGI_DATE DESC
+	</select>
+
+	<update id="modifyInfo">
+		UPDATE BM_USER SET
+		<if test="valueType == 'password'">
+			PASSWORD = #{value }
+		</if>
+		<if test="valueType == 'nickname'">
+			NICKNAME = #{value }
+		</if>
+		<if test="valueType == 'phone'">
+			PHONE = #{value }
+		</if>
+		WHERE USERNAME = #{username}
+	</update>
+
+	<delete id="deleteReview">
+		DELETE BM_REVIEW
+		WHERE USER_ID = #{userId }
+		AND ORDER_NUM = #{orderNum }
+	</delete>
+
+</mapper>
